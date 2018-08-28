@@ -1743,6 +1743,97 @@ class PluginProcessmakerProcessmaker extends CommonDBTM {
    }
 
 
+   // added createChange, setItemCatagory, setItemType, setItemUrgency, setItemImpact and setItemPriority function by unotech
+   /**
+    * Summary of setItemCategory
+    * @param mixed $itemtype
+    * @param mixed $itemId
+    * @param mixed $newstatus
+   */
+   public function setItemCategory( $itemtype, $itemId, $newcategory ) {
+      $item = getItemForItemtype( $itemtype );
+      if ($item->getFromDB( $itemId )) { 
+          $item->update( array('id' => $item->getID(), 'itilcategories_id' => $newcategory) );
+      }
+   }
+
+
+   /**
+    * Summary of setItemType
+    * @param mixed $itemtype
+    * @param mixed $itemId
+    * @param mixed $newstatus
+   */
+   public function setItemType( $itemtype, $itemId, $newtype ) {
+      $item = getItemForItemtype( $itemtype );
+      if ($item->getFromDB( $itemId )) { 
+          $item->update( array('id' => $item->getID(), 'type' => $newtype) );
+      }
+   }
+
+      /**
+    * Summary of setItemUrgency
+    * @param mixed $itemtype
+    * @param mixed $itemId
+    * @param mixed $newurgency
+   */
+   public function setItemUrgency( $itemtype, $itemId, $newurgency ) {
+      $item = getItemForItemtype( $itemtype );
+      if ($item->getFromDB( $itemId )) { 
+          $item->update( array('id' => $item->getID(), 'urgency' => $newurgency) );
+      }
+   }
+
+      /**
+    * Summary of setItemImpact
+    * @param mixed $itemtype
+    * @param mixed $itemId
+    * @param mixed $newimpact
+   */
+   public function setItemImpact( $itemtype, $itemId, $newimpact ) {
+      $item = getItemForItemtype( $itemtype );
+      if ($item->getFromDB( $itemId )) { 
+          $item->update( array('id' => $item->getID(), 'impact' => $newimpact) );
+      }
+   }
+
+      /**
+    * Summary of setItemPriority
+    * @param mixed $itemtype
+    * @param mixed $itemId
+    * @param mixed $newpriority
+   */
+   public function setItemPriority( $itemtype, $itemId, $newpriority ) {
+      $item = getItemForItemtype( $itemtype );
+      if ($item->getFromDB( $itemId )) { //&& $itemtype::isAllowedStatus( $item->fields['status'], $newstatus )) {
+          //$item->fields['status'] = $newstatus ;
+          $item->update( array('id' => $item->getID(), 'priority' => $newpriority) );
+      }
+   }
+
+         /**
+    * Summary of createChange
+    * @param mixed $itemtype
+    * @param mixed $itemId
+    * @param mixed $ChangeTitle
+    * @param mixed $ChangeDescription
+   */
+   public function createChange( $itemtype, $itemId, $ChangeTitle , $ChangeDescription ) {
+      //create change
+      $change = new Change();
+      $ChangeParams = array('name' => $ChangeTitle,
+                           'content' => $ChangeDescription );
+      $newChangeID = $change->add($ChangeParams);
+      //link change to ticket
+      $change_ticket =new Change_Ticket();
+      $change_ticket_param = array('changes_id'=> $newChangeID,
+                                    'tickets_id' => $itemId);
+      $change_ticket->add($change_ticket_param);
+
+   }
+   // end of code by unotech
+
+
    /**
     * Summary of computeTaskDuration
     * @param mixed $task
@@ -2467,6 +2558,10 @@ class PluginProcessmakerProcessmaker extends CommonDBTM {
                                            'GLPI_ITEM_IMPACT'               => $locItem->fields['impact'],
                                            'GLPI_ITEM_PRIORITY'             => $locItem->fields['priority'],
                                            'GLPI_TICKET_GLOBAL_VALIDATION'  => $locItem->fields['global_validation'] ,
+                                            //added ticket type and status by unotech                                           
+                                           'GLPI_Ticket_TYPE'               => $locItem->fields['type'] ,
+                                           'GLPI_TICKET_STATUS'             => $locItem->fields['status'] ,
+                                           //end of code
                                            'GLPI_TICKET_TECHNICIAN_GLPI_ID' => $userId,
                                            'GLPI_ITEM_TECHNICIAN_GLPI_ID'   => $userId,
                                            'GLPI_TICKET_TECHNICIAN_PM_ID'   => PluginProcessmakerUser::getPMUserId( $userId ),
@@ -2527,8 +2622,61 @@ class PluginProcessmakerProcessmaker extends CommonDBTM {
                                                                     "GLPI_TICKET_FOLLOWUP_REQUESTTYPES_ID",
                                                                     "GLPI_ITEM_TASK_ENDDATE",
                                                                     "GLPI_ITEM_TASK_STARTDATE",
-                                                                    "GLPI_ITEM_SET_STATUS"
+                                                                    "GLPI_ITEM_SET_STATUS",
+                                                                     //added item set urgency. impact, priority, type and catagory by unotech 
+                                                                    "GLPI_ITEM_SET_TYPE",
+                                                                    "GLPI_ITEM_SET_CATEGORY",
+                                                                    "GLPI_ITEM_SET_URGENCY",
+                                                                    "GLPI_ITEM_SET_IMPACT",
+                                                                    "GLPI_ITEM_SET_PRIORITY",
+                                                                    "GLPI_CHANGE_CREATE_TITLE",
+                                                                    "GLPI_CHANGE_CREATE_DESCRIPTION"
                                                                   ) );
+
+      //added code to check key exist for type by unotech
+      $itemSetType = '';
+      if (array_key_exists( 'GLPI_ITEM_SET_TYPE', $infoForTasks )) {
+         $itemSetType = $infoForTasks[ 'GLPI_ITEM_SET_TYPE' ];
+      }
+
+      //added code to check key exist for catagory
+      $itemSetCategory = '';
+      if (array_key_exists( 'GLPI_ITEM_SET_CATEGORY', $infoForTasks )) {
+         $itemSetCategory = $infoForTasks[ 'GLPI_ITEM_SET_CATEGORY' ];
+      }
+
+      //added code to check key exist for Urgency
+      $itemSetUrgency = '';
+      if (array_key_exists( 'GLPI_ITEM_SET_URGENCY', $infoForTasks )) {
+         $itemSetUrgency = $infoForTasks[ 'GLPI_ITEM_SET_URGENCY' ];
+      }
+
+      //added code to check key exist for Impact
+      $itemSetImpact = '';
+      if (array_key_exists( 'GLPI_ITEM_SET_IMPACT', $infoForTasks )) {
+         $itemSetImpact = $infoForTasks[ 'GLPI_ITEM_SET_IMPACT' ];
+      }
+
+      //added code to check key exist for Priority
+      $itemSetPriority = '';
+      if (array_key_exists( 'GLPI_ITEM_SET_PRIORITY', $infoForTasks )) {
+         $itemSetPriority = $infoForTasks[ 'GLPI_ITEM_SET_PRIORITY' ];
+      }
+
+       //added code to check key exist for Change Title
+      $itemCreateChangeTitle = '';
+      if (array_key_exists( 'GLPI_CHANGE_CREATE_TITLE', $infoForTasks )) {
+         $itemCreateChangeTitle = $infoForTasks[ 'GLPI_CHANGE_CREATE_TITLE' ];
+      }
+
+       //added code to check key exist for Change Description
+      $itemCreateChangeDescription = '';
+      if (array_key_exists( 'GLPI_CHANGE_CREATE_DESCRIPTION', $infoForTasks )) {
+         $itemCreateChangeDescription = $infoForTasks[ 'GLPI_CHANGE_CREATE_DESCRIPTION' ];
+      }
+
+      //end of code by unotech
+
       $itemSetStatus = '';
       if (array_key_exists( 'GLPI_ITEM_SET_STATUS', $infoForTasks )) {
          $itemSetStatus = $infoForTasks[ 'GLPI_ITEM_SET_STATUS' ];
@@ -2573,7 +2721,7 @@ class PluginProcessmakerProcessmaker extends CommonDBTM {
          //&& array_key_exists( 'GLPI_TICKET_FOLLOWUP_REQUESTTYPES_ID', $infoForTasks )
          $createFollowup = true;
       }
-
+ 
       // reset those variables
       $resultSave = $this->sendVariables( $myCase->getID(), array( "GLPI_ITEM_APPEND_TO_TASK" => '',
                                                            "GLPI_ITEM_TASK_CONTENT" => '',
@@ -2584,7 +2732,14 @@ class PluginProcessmakerProcessmaker extends CommonDBTM {
                                                            "GLPI_TICKET_FOLLOWUP_REQUESTTYPES_ID" => '',
                                                            "GLPI_ITEM_TASK_ENDDATE" => '',
                                                            "GLPI_ITEM_TASK_STARTDATE" => '',
-                                                           "GLPI_ITEM_SET_STATUS" => '')  );
+                                                           "GLPI_ITEM_SET_STATUS" => '',
+                                                           "GLPI_ITEM_SET_TYPE"  => '',
+                                                           "GLPI_ITEM_SET_CATEGORY" => '',
+                                                           "GLPI_ITEM_SET_URGENCY" => '',
+                                                           "GLPI_ITEM_SET_IMPACT" => '',
+                                                           "GLPI_ITEM_SET_PRIORITY" => '',
+                                                           "GLPI_CHANGE_CREATE_TITLE" => '',
+                                                           "GLPI_CHANGE_CREATE_DESCRIPTION" => '')  );
 
       // print_r( $pmRouteCaseResponse ) ;
       // die() ;
@@ -2632,6 +2787,38 @@ class PluginProcessmakerProcessmaker extends CommonDBTM {
       if ($itemSetStatus != '') {
          $this->setItemStatus($itemType, $itemId, $itemSetStatus );
       }
+
+      //added code to set item type and item catagory by unotech
+      if ($itemSetType != '') {
+         $this->setItemType($itemType, $itemId, $itemSetType );
+      }
+
+      if ($itemSetCategory != '') {
+         $this->setItemCategory($itemType, $itemId, $itemSetCategory );
+      }
+
+      //added code to set item type and item Urgency
+      if ($itemSetUrgency != '') {
+         $this->setItemUrgency($itemType, $itemId, $itemSetUrgency );
+      }
+
+      //added code to set item type and item Impact
+      if ($itemSetImpact != '') {
+         $this->setItemImpact($itemType, $itemId, $itemSetImpact );
+      }
+
+      //added code to set item type and item Priority
+      if ($itemSetPriority != '') {
+         $this->setItemPriority($itemType, $itemId, $itemSetPriority );
+      }
+
+       //added code to Add Change
+      if ($itemCreateChangeTitle != '' && $itemCreateChangeDescription != '' && $itemType == 'Ticket') {
+         $this->createChange($itemType, $itemId, $itemCreateChangeTitle , $itemCreateChangeDescription );
+      }
+
+      //end of code by unotech
+
 
       // evolution of case status: DRAFT, TO_DO, COMPLETED, CANCELLED
       $myCase->update( array( 'id' => $myCase->getID(), 'case_status' => $caseInfo->caseStatus ) );
